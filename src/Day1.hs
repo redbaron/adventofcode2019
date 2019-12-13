@@ -1,18 +1,34 @@
 module Day1 where
 
 import           Data.Maybe
+import           Control.Monad
+import           Data.Monoid
 
-fuelFromMassMaybe :: Int -> Maybe Int
-fuelFromMassMaybe m = if r > 0 then Just r else Nothing
-    where r = m `div` 3 - 2
+-- part 1
+fuel :: Int -> Maybe Int
+fuel m = if r > 0 then Just r else Nothing where r = m `div` 3 - 2
 
 fuelFromMass :: Int -> Int
-fuelFromMass m = fromMaybe 0 $ fuelFromMassMaybe m
+fuelFromMass m = fromMaybe 0 $ fuel m
 
-seq' :: Num a => Maybe a -> (a -> Maybe a) -> a
-seq' (Just x) f = fromMaybe 0 r + seq' r f where r = f x
-seq' Nothing  _ = 0
+-- part 2
 
--- accounts for mass of a fuel itself
+--- recursion
+f' :: Num a => Maybe a -> (a -> Maybe a) -> a
+f' (Just x) fn = fromMaybe 0 r + f' r fn where r = fn x
+f' Nothing  _  = 0
+
 fuelFromMassAndFuel :: Int -> Int
-fuelFromMassAndFuel m = seq' (Just m) fuelFromMassMaybe
+fuelFromMassAndFuel m = f (Just m) fuel
+
+--- monad
+f :: Maybe Int -> (Int -> Maybe Int) -> Int
+f x fn = fromMaybe 0 $ do
+    v <- x
+    let n    = fn v
+    let next = f n fn
+    x' <- n
+    return (x' + next)
+
+fuelFromMassAndFuel' :: Int -> Int
+fuelFromMassAndFuel' m = f (Just m) fuel
